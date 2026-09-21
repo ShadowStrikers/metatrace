@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MetaTrace — File Metadata Inspector</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">M.</div>
+      <div class="brand-text">
+        <h1>MetaTrace</h1>
+        <p class="tagline">Specimen sheet for file metadata</p>
+      </div>
+    </div>
+    <div class="spec-id" id="specId">NO SPECIMEN LOADED</div>
+  </div>
+</header>
+
+<main>
+
+  <section class="panel intake-panel" id="dropZone">
+    <div class="intake-inner">
+      <p class="eyebrow">Load a specimen</p>
+      <h2>Drop a file to inspect its metadata</h2>
+      <p class="intake-hint">Everything runs in your browser. Nothing is uploaded anywhere.</p>
+      <label class="upload-button">
+        Choose file
+        <input type="file" id="fileInput" hidden>
+      </label>
+    </div>
+  </section>
+
+  <section class="panel scan-panel" id="scanPanel" hidden>
+    <div class="scan-stage">
+      <div class="scan-icon" id="scanIcon">
+        <svg viewBox="0 0 64 80" aria-hidden="true">
+          <path d="M8 2 H44 L58 16 V78 H8 Z" class="file-outline"/>
+          <path d="M44 2 V16 H58" class="file-fold"/>
+        </svg>
+        <div class="scan-line"></div>
+      </div>
+      <p class="scan-label" id="scanLabel">Scanning specimen…</p>
+    </div>
+  </section>
+
+  <div class="results-wrap" id="resultsWrap" hidden>
+    <div class="ruler" id="ruler" aria-hidden="true"></div>
+
+    <div class="results-body">
+
+      <div class="thumb-wrap" id="thumbWrap" hidden>
+        <img id="thumbImg" alt="Preview of the analyzed image">
+      </div>
+
+      <div class="filter-bar">
+        <svg class="filter-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="text" id="filterInput" placeholder="Filter properties — try gps, date, camera…" autocomplete="off">
+        <button class="filter-clear" id="filterClear" hidden>clear</button>
+      </div>
+
+      <section class="panel hero" id="heroPanel">
+        <div class="hero-main">
+          <div class="hero-count" id="heroCount">0</div>
+          <div class="hero-count-label">properties extracted</div>
+        </div>
+        <div class="hero-side">
+          <div class="hero-verdict" id="heroVerdict">
+            <span class="verdict-dot" id="verdictDot"></span>
+            <span class="verdict-text" id="verdictText">Analyzing…</span>
+          </div>
+          <div class="hero-stat-row">
+            <div class="hero-stat">
+              <span class="hero-stat-label">TYPE</span>
+              <span class="hero-stat-value sig" id="heroType">—</span>
+            </div>
+            <div class="hero-stat">
+              <span class="hero-stat-label">SIZE</span>
+              <span class="hero-stat-value" id="heroSize">—</span>
+            </div>
+            <div class="hero-stat">
+              <span class="hero-stat-label">FLAGS</span>
+              <span class="hero-stat-value" id="heroFlags">0</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel actions-panel" id="actionsPanel">
+        <div class="actions-row">
+          <button class="action-btn primary" id="stripBtn">Strip metadata & download clean copy</button>
+          <button class="action-btn" id="jsonBtn">Export report as JSON</button>
+        </div>
+        <p class="actions-note" id="actionsNote">Stripping redraws images through a canvas to discard all embedded metadata. Other file types are report-only for now.</p>
+        <div class="strip-result" id="stripResult" hidden></div>
+      </section>
+
+      <section class="panel flagged-panel" id="flaggedPanel" hidden>
+        <p class="eyebrow flag-eyebrow">Privacy-sensitive fields found</p>
+        <div class="flag-list" id="flagList"></div>
+      </section>
+
+      <section class="panel spec-panel">
+        <div class="panel-head collapsible">
+          <p class="eyebrow">General</p>
+          <span class="count-badge" id="generalCount">0</span>
+        </div>
+        <div class="spec-grid" id="generalGrid"></div>
+      </section>
+
+      <section class="panel spec-panel" id="imagePanel" hidden>
+        <div class="panel-head collapsible">
+          <p class="eyebrow">Image highlights</p>
+          <span class="count-badge" id="imageCount">0</span>
+        </div>
+        <div class="spec-grid" id="imageGrid"></div>
+      </section>
+
+      <section class="panel spec-panel" id="gpsPanel" hidden>
+        <div class="panel-head collapsible">
+          <p class="eyebrow flag-eyebrow">GPS location</p>
+          <span class="count-badge" id="gpsCount">0</span>
+        </div>
+        <div class="spec-grid" id="gpsGrid"></div>
+        <div id="map"></div>
+      </section>
+
+      <section class="panel spec-panel" id="exifAllPanel" hidden>
+        <div class="panel-head collapsible">
+          <p class="eyebrow">All EXIF properties</p>
+          <span class="count-badge" id="exifAllCount">0</span>
+        </div>
+        <div class="spec-grid" id="exifAllGrid"></div>
+      </section>
+
+      <section class="panel spec-panel" id="pdfPanel" hidden>
+        <div class="panel-head collapsible">
+          <p class="eyebrow">Document properties (PDF)</p>
+          <span class="count-badge" id="pdfCount">0</span>
+        </div>
+        <div class="spec-grid" id="pdfGrid"></div>
+      </section>
+
+      <section class="panel spec-panel" id="officePanel" hidden>
+        <div class="panel-head collapsible">
+          <p class="eyebrow">Document properties</p>
+          <span class="count-badge" id="officeCount">0</span>
+        </div>
+        <div class="spec-grid" id="officeGrid"></div>
+      </section>
+
+      <section class="panel spec-panel" id="audioPanel" hidden>
+        <div class="panel-head collapsible">
+          <p class="eyebrow">Audio tags</p>
+          <span class="count-badge" id="audioCount">0</span>
+        </div>
+        <div class="spec-grid" id="audioGrid"></div>
+      </section>
+
+      <section class="panel spec-panel">
+        <p class="eyebrow">Raw preview</p>
+        <p class="hex-hint">First bytes of the file, for anything the parsers above didn't cover.</p>
+        <pre class="hex-dump" id="hexDump"></pre>
+      </section>
+
+      <button class="reset-button" id="resetButton">Load another specimen</button>
+
+    </div>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <p>MetaTrace runs entirely client-side. GPS lookups use OpenStreetMap Nominatim — no API key required.</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
