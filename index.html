@@ -6,7 +6,7 @@
 <title>MetaTrace — File Metadata Inspector</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 
@@ -15,6 +15,7 @@
 <body>
 
 <div class="grain" aria-hidden="true"></div>
+<div class="hero-starburst" aria-hidden="true"></div>
 
 <header class="site-header">
   <div class="header-inner">
@@ -40,6 +41,7 @@
         Choose file
         <input type="file" id="fileInput" hidden>
       </label>
+      <button class="sample-link" id="sampleBtn" type="button">Or try a sample photo with GPS &amp; camera metadata &rarr;</button>
     </div>
   </section>
 
@@ -57,8 +59,6 @@
   </section>
 
   <div class="results-wrap" id="resultsWrap" hidden>
-    <div class="ruler" id="ruler" aria-hidden="true"></div>
-
     <div class="results-body">
 
       <div class="thumb-wrap" id="thumbWrap" hidden>

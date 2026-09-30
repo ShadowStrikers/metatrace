@@ -63,31 +63,12 @@
   const hexDump = document.getElementById('hexDump');
   const flaggedPanel = document.getElementById('flaggedPanel');
   const flagList = document.getElementById('flagList');
-  const ruler = document.getElementById('ruler');
 
   let map = null;
 
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  }
-
-  buildRulerTicks();
-  function buildRulerTicks() {
-    for (let i = 0; i < 60; i++) {
-      if (i % 5 === 0) {
-        const tick = document.createElement('div');
-        tick.style.position = 'absolute';
-        tick.style.left = '0';
-        tick.style.top = (i * 12) + 'px';
-        tick.style.fontFamily = 'IBM Plex Mono, monospace';
-        tick.style.fontSize = '8px';
-        tick.style.color = 'var(--ink-faint)';
-        tick.style.paddingLeft = '2px';
-        tick.textContent = i;
-        ruler.appendChild(tick);
-      }
-    }
   }
 
   // ---------- Upload handling ----------
@@ -106,9 +87,30 @@
     const file = e.target.files[0];
     if (file) handleFile(file);
   });
+  const sampleBtn = document.getElementById('sampleBtn');
+  if (sampleBtn) {
+    sampleBtn.addEventListener('click', async () => {
+      const original = sampleBtn.textContent;
+      sampleBtn.textContent = 'Loading sample…';
+      sampleBtn.disabled = true;
+      try {
+        const res = await fetch('sample/demo-photo.jpg');
+        const blob = await res.blob();
+        const file = new File([blob], 'demo-photo.jpg', { type: 'image/jpeg' });
+        handleFile(file);
+      } catch (err) {
+        sampleBtn.textContent = 'Could not load sample';
+        setTimeout(() => { sampleBtn.textContent = original; sampleBtn.disabled = false; }, 2000);
+        return;
+      }
+      sampleBtn.textContent = original;
+      sampleBtn.disabled = false;
+    });
+  }
   resetButton.addEventListener('click', () => {
     resultsWrap.hidden = true;
     dropZone.hidden = false;
+    document.body.classList.remove('results-view');
     specId.textContent = 'NO SPECIMEN LOADED';
     specId.classList.remove('active');
     fileInput.value = '';
@@ -131,6 +133,7 @@
     resultsWrap.hidden = true;
     scanPanel.hidden = false;
     scanLabel.textContent = 'Scanning specimen…';
+    document.body.classList.add('results-view');
 
     specId.textContent = file.name.toUpperCase();
     specId.classList.add('active');
